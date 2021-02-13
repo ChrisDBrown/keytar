@@ -1,37 +1,35 @@
 defmodule Keytar do
   @moduledoc """
-  Simple example to blink a list of LEDs forever.
-
-  The list of LEDs is platform-dependent, and defined in the config directory
-  (see config.exs). See README.md for build instructions.
+  Blink keybow keypad forever.
   """
 
   # Durations are in milliseconds
   @on_duration 200
   @off_duration 200
 
-  alias Nerves.Leds
+  alias Circuits.SPI
   require Logger
 
   def start(_type, _args) do
     led_list = Application.get_env(:keytar, :led_list)
     Logger.debug("list of leds to blink is #{inspect(led_list)}")
-    spawn(fn -> blink_list_forever(led_list) end)
+
+    {:ok, spidev} = SPI.open("spidev0.0", speed_hz: 4000000)
+    spawn(fn -> blink_forever(spidev) end)
     {:ok, self()}
   end
 
-  # call blink_led on each led in the list sequence, repeating forever
-  defp blink_list_forever(led_list) do
-    Enum.each(led_list, &blink(&1))
-    blink_list_forever(led_list)
+  defp blink_forever(spidev) do
+    blink(spidev)
+    blink_forever(spidev)
   end
 
-  # given an led key, turn it on for @on_duration then back off
-  defp blink(led_key) do
-    # Logger.debug "blinking led #{inspect led_key}"
-    Leds.set([{led_key, true}])
+  defp blink(spidev) do
+    SPI.transfer(spidev, <<0, 0, 0, 0, 227, 255, 0, 0, 227, 255, 0, 0, 227, 255, 0, 0, 227, 255, 0, 0, 227, 255, 0, 0, 227, 255, 0, 0, 227, 255, 0, 0, 227, 255, 0, 0, 227, 255, 0, 0, 227, 255, 0, 0, 227, 255, 0, 0, 227, 255, 0, 0, 255, 255, 255, 255>>)
     :timer.sleep(@on_duration)
-    Leds.set([{led_key, false}])
+    SPI.transfer(spidev, <<0, 0, 0, 0, 227, 0, 255, 0, 227, 0, 255, 0, 227, 0, 255, 0, 227, 0, 255, 0, 227, 0, 255, 0, 227, 0, 255, 0, 227, 0, 255, 0, 227, 0, 255, 0, 227, 0, 255, 0, 227, 0, 255, 0, 227, 0, 255, 0, 227, 0, 255, 0, 255, 255, 255, 255>>)
+    :timer.sleep(@on_duration)
+    SPI.transfer(spidev, <<0, 0, 0, 0, 227, 0, 0, 255, 227, 0, 0, 255, 227, 0, 0, 255, 227, 0, 0, 255, 227, 0, 0, 255, 227, 0, 0, 255, 227, 0, 0, 255, 227, 0, 0, 255, 227, 0, 0, 255, 227, 0, 0, 255, 227, 0, 0, 255, 227, 0, 0, 255, 255, 255, 255, 255>>)
     :timer.sleep(@off_duration)
   end
 end

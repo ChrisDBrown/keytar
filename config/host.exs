@@ -1,3 +1,5 @@
+# Configuration for the host (no LEDs to blink)
 import Config
 
-# Add configuration that is only needed when running on the host here.
+config :keytar, led_list: []
+config :nerves_leds, names: []
